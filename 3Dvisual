@@ -1,0 +1,84 @@
+using UnityEngine;
+using System.IO;
+
+public class SensorDataVisualizer : MonoBehaviour
+{
+    public Transform thumbJoint;
+    public Transform indexJoint;
+    public Transform middleJoint;
+    public Transform ringJoint;
+    public Transform pinkyJoint;
+    public GameObject gloveModel;
+
+    private SensorData currentSensorData;
+
+    private void Start()
+    {
+        // Load JSON data from file
+        string jsonData = File.ReadAllText("path/to/your/json/file.json");
+
+        // Parse the sensor data from JSON
+        ParseSensorData(jsonData);
+    }
+
+    private void ParseSensorData(string jsonData)
+    {
+        // Deserialize JSON string into object
+        currentSensorData = JsonUtility.FromJson<SensorData>(jsonData);
+    }
+
+    private Vector3 CalculateJointAngles(SensorData sensorData)
+    {
+        // Extract values for each sensor
+        float thumbBend = sensorData.thumbBend;
+        float indexBend = sensorData.indexBend;
+        float middleBend = sensorData.middleBend;
+        float ringBend = sensorData.ringBend;
+        float pinkyBend = sensorData.pinkyBend;
+        float handRoll = sensorData.handRoll;
+        float handPitch = sensorData.handPitch;
+        float handYaw = sensorData.handYaw;
+
+        // Calculate joint angles based on finger bend and hand rotation values
+        Vector3 jointAngles = new Vector3(
+            -thumbBend,
+            indexBend,
+            middleBend
+        );
+
+        // Add hand rotation to joint angles
+        jointAngles += new Vector3(
+            handPitch,
+            -handYaw,
+            handRoll
+        );
+
+        return jointAngles;
+    }
+
+    private void Update()
+    {
+        // Calculate joint angles based on the current sensor data
+        Vector3 jointAngles = CalculateJointAngles(currentSensorData);
+
+        // Set rotation of glove model joints
+        thumbJoint.localRotation = Quaternion.Euler(jointAngles.x, jointAngles.y, 0f);
+        indexJoint.localRotation = Quaternion.Euler(jointAngles.x, jointAngles.y, jointAngles.z);
+        middleJoint.localRotation = Quaternion.Euler(jointAngles.x, jointAngles.y, jointAngles.z);
+        ringJoint.localRotation = Quaternion.Euler(jointAngles.x, jointAngles.y, jointAngles.z);
+        pinkyJoint.localRotation = Quaternion.Euler(jointAngles.x, jointAngles.y, jointAngles.z);
+    }
+}
+
+[System.Serializable]
+public class SensorData
+{
+    public float thumbBend;
+    public float indexBend;
+    public float middleBend;
+    public float ringBend;
+    public float pinkyBend;
+    public float handRoll;
+    public float handPitch;
+    public float handYaw;
+}
